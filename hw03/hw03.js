@@ -214,8 +214,8 @@ function setupMouseEvents() {
                     textOverlay_intersect = setupText(canvas, "No intersection", 3);
                 }
                 else if(intersects.length == 1){
-                    textOverlay_intersect = setupText(canvas, "Intersection Points: 1 Point 1: (" + intersects[0][0] + 
-                    ", " + intersects[0][1] + ")", 3);
+                    textOverlay_intersect = setupText(canvas, "Intersection Points: 1 Point 1: (" + intersects[0][0].toFixed(2) + 
+                    ", " + intersects[0][1].toFixed(2) + ")", 3);
                 }
                 else if(intersects.length == 2){
                     textOverlay_intersect = setupText(canvas, "Intersection Points: 2 Point 1: (" + intersects[0][0].toFixed(2) +
