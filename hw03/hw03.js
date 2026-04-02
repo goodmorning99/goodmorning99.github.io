@@ -23,12 +23,7 @@ let isDrawing = false; // mouse button을 누르고 있는 동안 true로 change
 let startPoint = null;  // mouse button을 누른 위치
 let tempEndPoint = null; // mouse를 움직이는 동안의 위치
 let line = []; // 그려진 선분들을 저장하는 array
-let circle = [];
-let intersects = [];
-let textOverlay_circle;
-let textOverlay_line;
-let textOverlay_intersect;
-
+let textOverlay_line; // 1st line segment 정보 표시
 let axes = new Axes(gl, 0.85); // x, y axes 그려주는 object (see util.js)
 
 // DOMContentLoaded event
@@ -158,7 +153,7 @@ function setupMouseEvents() {
         const x = event.clientX - rect.left;  // canvas 내 x 좌표
         const y = event.clientY - rect.top;   // canvas 내 y 좌표
         
-        if (!isDrawing && line.length == 0) { 
+        if (!isDrawing) { 
             // 1번 또는 2번 선분을 그리고 있는 도중이 아닌 경우 (즉, mouse down 상태가 아닌 경우)
             // 캔버스 좌표를 WebGL 좌표로 변환하여 선분의 시작점을 설정
             let [glX, glY] = convertToWebGLCoordinates(x, y);
@@ -189,43 +184,12 @@ function setupMouseEvents() {
             // ex) lines = [[1, 2, 3, 4]] 이고 startPoint = [5, 6], tempEndPoint = [7, 8] 이면,
             //     lines = [[1, 2, 3, 4], [5, 6, 7, 8]] 이 됨
 
-            if(circle.length == 0){
-                const dx = tempEndPoint[0] - startPoint[0];
-                const dy = tempEndPoint[1] - startPoint[1];
-                const radius = Math.sqrt(dx*dx + dy*dy);
-                circle = [...startPoint, radius];
-                textOverlay_circle = setupText(canvas, "Circle: center (" + circle[0].toFixed(2) + ", " + circle[1].toFixed(2) + 
-                ") radius = " + circle[2].toFixed(2), 1);
-            }
-            else{
-                line = [...startPoint, ...tempEndPoint]; 
-                const x1 = line[0];
-                const y1 = line[1];
-                const x2 = line[2];
-                const y2 = line[3];
-                const cx = circle[0];
-                const cy = circle[1];
-                const r = circle[2];
-                textOverlay_line = setupText(canvas, "Line segment: (" + x1.toFixed(2) + ", " + y1.toFixed(2) + 
-                ") ~ (" + x2.toFixed(2) + ", " + y2.toFixed(2) + ")", 2);
-
-                intersects = IntersectCircleAndLine(x1, y1, x2, y2, cx, cy, r);
-                if(intersects.length == 0){
-                    textOverlay_intersect = setupText(canvas, "No intersection", 3);
-                }
-                else if(intersects.length == 1){
-                    textOverlay_intersect = setupText(canvas, "Intersection Points: 1 Point 1: (" + intersects[0][0].toFixed(2) + 
-                    ", " + intersects[0][1].toFixed(2) + ")", 3);
-                }
-                else if(intersects.length == 2){
-                    textOverlay_intersect = setupText(canvas, "Intersection Points: 2 Point 1: (" + intersects[0][0].toFixed(2) +
-                    ", " + intersects[0][1].toFixed(2) + ") Point 2: " + intersects[1][0].toFixed(2) + ", " + intersects[1][1].toFixed(2) + ")", 3);
-                }
-            }
+            line = [...startPoint, ...tempEndPoint]; 
 
             
+            textOverlay_line = setupText(canvas, "Line segment: (" + line[0].toFixed(2) + ", " + line[1].toFixed(2) + 
+                ") ~ (" + line[2].toFixed(2) + ", " + line[3].toFixed(2) + ")", 2);
             
-
 
 
             isDrawing = false;
@@ -240,45 +204,6 @@ function setupMouseEvents() {
     canvas.addEventListener("mouseup", handleMouseUp);
 }
 
-function IntersectCircleAndLine(x1, y1, x2, y2, cx, cy, r) {
-    // line c(t) = (x(t), y(t)) (0 <= t <= 1)
-    // circle: (x-cx)^2 + (y-cy)^2 = r^2
-    // let, f(t) = (x(t)-cx)^2 + (y(t)-cy)-r^2
-    // then, f(t) = at^2+bt+c
-    // 0<=t<=1 에서 f(t)=0의 해의 개수가 교차점의 개수.
-
-    let intersects = []; // f(t)=0의 해
-
-    const a = (x2-x1)**2 + (y2-y1)**2;
-    const b = 2*((x2-x1)*(x1-cx)+(y1-cy)*(y2-y1));
-    const c = (x1-cx)**2 + (y1-cy)**2 - r**2;
-
-    const D = b**2 - 4*a*c;
-    if(D>0){
-        const t1 = (-b-Math.sqrt(D)) / (2*a);
-        const t2 = (-b+Math.sqrt(D)) / (2*a);
-        if(t1>=0 && t1<=1){
-            intersects.push(t1);
-        }
-        if(t2>=0 && t2<=1){
-            intersects.push(t2);
-        }
-    }
-    else if(D == 0){
-        const t1 = -b/(2*a);
-        if(t1>=0 && t1<=1){
-            intersects.push(t1);
-        }
-    }
-
-    let result = [];
-    for(const t of intersects){
-        result.push([x1+(x2-x1)*t, y1+(y2-y1)*t]);
-    }
-
-    return result;
-}
-
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -289,36 +214,16 @@ function render() {
     // 저장된 선들 그리기
     let num = 0;
     if(line.length != 0){
-        shader.setVec4("u_color", [0.0, 0.8, 1.0, 1.0]);  
+        shader.setVec4("u_color", [1.0, 1.0, 0.0, 1.0]);  
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(line), gl.STATIC_DRAW);
         gl.bindVertexArray(vao);
         gl.drawArrays(gl.LINES, 0, 2);
     }
-    
-    if(circle.length != 0){
-        const [cx, cy, r] = circle;
-        drawCircle(cx, cy, r, [0.7, 0.0, 1.0, 1.0]);
-    }
-    
-
-    for(let point of intersects){
-        shader.setVec4("u_color", [1.0, 1.0, 0.0, 1.0]);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([point[0], point[1]]), gl.STATIC_DRAW);
-        gl.bindVertexArray(vao);
-        gl.drawArrays(gl.POINTS, 0, 1);
-    }
+   
 
 
     // 임시 선 그리기
-    if(isDrawing && startPoint && tempEndPoint && circle.length == 0) {
-        const dx = tempEndPoint[0] - startPoint[0];
-        const dy = tempEndPoint[1] - startPoint[1];
-        const r = Math.sqrt(dx**2 + dy**2);
-        drawCircle(startPoint[0], startPoint[1], r, [0.5, 0.5, 0.5, 1.0])
-    }
-
-
-    if (isDrawing && startPoint && tempEndPoint && circle.length != 0) {
+    if (isDrawing && startPoint && tempEndPoint) {
         shader.setVec4("u_color", [0.5, 0.5, 0.5, 1.0]); // 임시 선분의 color는 회색
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([...startPoint, ...tempEndPoint]), 
                       gl.STATIC_DRAW);
