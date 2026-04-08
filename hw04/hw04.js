@@ -73,7 +73,7 @@ function render(time) {
     shader.use();
 
     let bigAngle = Math.sin(elapsedTime) * Math.PI * 2.0;
-    let smallAngle = Math.sin(elapsedTime) * Math.PI * -10.0;
+    let smallAngle = Math.PI/2 + Math.sin(elapsedTime) * Math.PI * -10.0;
 
     let pillarMatrix = mat4.create();
     mat4.translate(pillarMatrix, pillarMatrix, [0.0, -0.4, 0.0]);
@@ -82,7 +82,7 @@ function render(time) {
     let bigWingMatrix = mat4.create();
     mat4.translate(bigWingMatrix, bigWingMatrix, [0.0, 0.0, 0.0]);
     mat4.rotateZ(bigWingMatrix, bigWingMatrix, bigAngle);
-    drawRectWithMatrix(bigWingMatrix, 0.6, 0.1, [0.9, 0.9, 0.9, 1.0]);
+    drawRectWithMatrix(bigWingMatrix, 0.6, 0.1, [1.0, 1.0, 1.0, 1.0]);
 
     let leftSmallMatrix = mat4.create();
     mat4.copy(leftSmallMatrix, bigWingMatrix);
