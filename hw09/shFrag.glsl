@@ -27,10 +27,6 @@ uniform vec3 u_viewPos;
 uniform int u_toonLevel;
 
 float quantize(float value, float level) {
-    if (level <= 1.0) {
-        return value > 0.0 ? 1.0 : 0.0;
-    }
-
     return floor(value * level) / level;
 }
 
@@ -42,7 +38,7 @@ void main() {
     // diffuse 
     vec3 norm = normalize(normal);
     //vec3 lightDir = normalize(light.position - fragPos);
-    vec3 lightDir = normalize(light.direction);
+    vec3 lightDir = normalize(-light.direction);
     float dotNormLight = dot(norm, lightDir);
     float diff = max(dotNormLight, 0.0);
     diff = quantize(diff, float(u_toonLevel));
